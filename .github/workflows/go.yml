@@ -42,7 +42,7 @@ jobs:
     
     - name: Build the container image
       id: build
-      run: docker build . --file Dockerfile --tag localbuild/goimage:${{ env.GIT_SHA }}
+      run: docker build . --tag localbuild/goimage:${{ env.GIT_SHA }}
     
     - name: Scan image
       uses: anchore/scan-action@v3
