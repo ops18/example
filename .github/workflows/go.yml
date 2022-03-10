@@ -40,9 +40,13 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
     
-    - name: Build the container image
+    - name: build local container
+      uses: docker/build-push-action@v2
       id: build
-      run: docker build . --tag localbuild/goimage:${{ env.GIT_SHA }}
+      with:
+        tags: localbuild/goimage:${{ env.GIT_SHA }}
+        push: false
+        load: true  
     
     - name: Scan image
       uses: anchore/scan-action@v3
