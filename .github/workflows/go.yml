@@ -9,7 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-      
+    env:
+      working-directory: "hello/"
     steps:
     - uses: actions/checkout@v2
 
@@ -20,8 +21,9 @@ jobs:
         
     - name: Build 
       run: go build -v hello.go
-      working-directory: "hello/"
+      
+    - name: Test code
+      run: go test -v main_test.go
     
     - name: Run
       run: go run hello.go
-      working-directory: "hello/"
