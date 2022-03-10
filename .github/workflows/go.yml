@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  test:
+  go-test:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags')
     steps:
@@ -27,18 +27,36 @@ jobs:
     - name: Run
       run: go run hello.go
       
-  deploy:
+  Docker-Lint:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
-    #needs: test
+    needs: go-test
     steps:
-        
+    - name: Docker lint
+      uses: luke142367/Docker-Lint-Action@v1.0.0
+      with:
+        target: Dockerfile
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+  Docker-build:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    needs: Docker-Lint
+    steps:
     - name: Update tag to GIT_SHA env property with commit short sha
       run: echo "GIT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
       id: version
      
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
+      
+    - name: Docker lint
+      uses: luke142367/Docker-Lint-Action@v1.0.0
+      with:
+        target: Dockerfile
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
     - name: build local container
       uses: docker/build-push-action@v2
@@ -47,7 +65,12 @@ jobs:
         tags: localbuild/goimage:${{ env.GIT_SHA }}
         push: false
         load: true  
-    
+        
+  Docker-scan:
+   runs-on: ubuntu-latest
+   if: github.ref == 'refs/heads/master'
+   needs: Docker-build
+   steps:
     - name: Scan image
       uses: anchore/scan-action@v3
       id: scan
