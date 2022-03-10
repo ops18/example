@@ -46,6 +46,11 @@ jobs:
       with:
         push: false
         tags: |
-          test-go
+          localbuild/goimage:${{ env.GIT_SHA }}
         build-args: |
           ${{ env.GIT_SHA }}
+    - name: Scan image
+      uses: anchore/scan-action@v3
+      with:
+        image: "localbuild/goimage:${{ env.GIT_SHA }}"
+        fail-build: true
