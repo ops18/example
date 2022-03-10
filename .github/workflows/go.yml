@@ -53,7 +53,10 @@ jobs:
       id: scan
       with:
         image: "localbuild/goimage:${{ env.GIT_SHA }}"
-        fail-build: true
+        acs-report-enable: true
+        severity-cutoff: critical
+        fail-build: false
+        debug: true
     
     - name: Inspect action SARIF report
       run: cat ${{ steps.scan.outputs.sarif }}
