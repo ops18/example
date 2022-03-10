@@ -20,4 +20,4 @@ jobs:
         go-version: 1.17
     
     - name: Run
-      run: ls -lrth
+      run: go run hell0/hello.go
