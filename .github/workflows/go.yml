@@ -30,7 +30,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
-    needs: test
+    #needs: test
     steps:
         
     - name: Update tag to GIT_SHA env property with commit short sha
@@ -40,17 +40,16 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
     
-    - name: Build and push
-      id: docker_build
-      uses: docker/build-push-action@v2
-      with:
-        push: false
-        tags: |
-          localbuild/goimage:${{ env.GIT_SHA }}
-        build-args: |
-          ${{ env.GIT_SHA }}
+    - name: Build the container image
+      id: build
+      run: docker build . --file Dockerfile --tag localbuild/goimage:${{ env.GIT_SHA }}
+    
     - name: Scan image
       uses: anchore/scan-action@v3
+      id: scan
       with:
         image: "localbuild/goimage:${{ env.GIT_SHA }}"
         fail-build: true
+    
+    - name: Inspect action SARIF report
+      run: cat ${{ steps.scan.outputs.sarif }}
