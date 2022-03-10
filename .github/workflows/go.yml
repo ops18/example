@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env: 
-      working-directory: ./hello/
+      working-directory: /hello/
     steps:
     - uses: actions/checkout@v2
 
