@@ -18,12 +18,18 @@ jobs:
       uses: actions/setup-go@v2
       with:
         go-version: 1.17
+<<<<<<< HEAD
         
     - name: Build 
       run: go build .
       
     - name: Test code
       run: go test .
+=======
+      
+    - name: Test code
+      run: go test hello/
+>>>>>>> 23d5ddaf89054df019fe6cc3c22e8ea4c0aaa36f
     
     - name: Run
       run: go run hello.go
