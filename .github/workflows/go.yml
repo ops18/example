@@ -85,10 +85,10 @@ jobs:
     - name: Configure Docker Authentication
       run: gcloud auth configure-docker --quiet
 
-    #- name: Push Docker image to GCR
-    #  run: docker push $IMAGE_NAME:${{ env.GIT_SHA }}
+    - name: Push Docker image to GCR
+      run: docker push gcr.io/ingka-apim-global-dev/go-code:${{ env.GIT_SHA }}
 
-    #- name: Deploy kong gateway to cloud run
-    #  id: deploy
-    #  run: gcloud run deploy go-code --image=$IMAGE_NAME:${{ env.GIT_SHA }}  --memory 1Gi --cpu 1 --timeout=30 --min-instances=1 --max-instances=100 --concurrency=80 --vpc-connector=projects/ingka-apim-global-dev/locations/europe-west4/connectors/kong-gw-cloudrun --platform=managed --allow-unauthenticated --region=europe-west4 --project=ingka-apim-global-dev --vpc-egress=all-traffic --port=8000
-    ########################----------Cloud Run Configuration------------------############################### 
+    - name: Deploy go code to cloud run
+      id: deploy
+      run: gcloud run deploy go-code --image=gcr.io/ingka-apim-global-dev/go-code:${{ env.GIT_SHA }}  --memory 1Gi --cpu 1 --timeout=30 --min-instances=1 --max-instances=100 --concurrency=80 --vpc-connector=projects/ingka-apim-global-dev/locations/europe-west4/connectors/kong-gw-cloudrun --platform=managed --allow-unauthenticated --region=europe-west4 --project=ingka-apim-global-dev --vpc-egress=all-traffic --port=8000
+########################----------Cloud Run Configuration------------------############################### 
