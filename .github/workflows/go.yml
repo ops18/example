@@ -38,8 +38,7 @@ jobs:
       - uses: actions/checkout@v2 
       - uses: hadolint/hadolint-action@v1.6.0
         with:
-          dockerfile: "./demo/Dockerfile"
-	 
+          dockerfile: "./demo/Dockerfile" 
   Docker-build:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
