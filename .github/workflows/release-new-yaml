@@ -1,0 +1,125 @@
+name: Create release v2
+
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: 'Enter your email address'
+        required: true
+  push:
+    tags:
+      - 'v*'
+
+env:
+  go-version: 1.17
+  CI: true
+
+jobs:
+  test-release:
+    runs-on: ubuntu-latest
+    outputs:
+      new_tag: ${{ steps.tag_version_dry_run.outputs.new_tag }}
+      new_version: ${{ steps.tag_version_dry_run.outputs.new_version }}
+      release_type: ${{ steps.tag_version_dry_run.outputs.release_type }}
+    steps:
+      - name: Checkout codebase
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: 'master'
+
+      - name: Create tag
+        id: tag_version_dry_run
+        uses: mathieudutour/github-tag-action@v5.5
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag_prefix: ''
+          custom_release_rules: config:patch:Configuration Changes,chore:patch:Miscellaneous,
+          dry_run: true
+  bump-version:
+    needs: test-release
+    runs-on: ubuntu-latest
+    outputs:
+      status: ${{ steps.failure.outputs.status }}
+    steps:
+      - name: Checkout codebase
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: 'master'
+
+      - name: Increment version
+        run: |
+          git config --local user.email "shubham.hatwar@gmail.com"
+          git config --local user.name "shubham.hatwar"
+          go version 
+
+      - name: Check if there are changes
+        id: changes
+        uses: UnicornGlobal/has-changes-action@v1.0.11
+
+      - name: Commit package bump
+        if: steps.changes.outputs.changed == 1
+        run: |
+          git commit -m "Bumping version - ${{ needs.test-release.outputs.new_version }}" -a
+
+      - name: Push changes
+        if: steps.changes.outputs.changed == 1
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: master
+
+      - name: Report failure status
+        id: failure
+        if: ${{ failure() }}
+        run: echo "::set-output name=status::failure"
+
+  create-release:
+    runs-on: ubuntu-latest
+    needs: [bump-version, test-release]
+    if: needs.bump-version.outputs.status != 'failure'
+    outputs:
+      status: ${{ steps.failure.outputs.status }}
+      #changelog: ${{ steps.convert_jira_links.outputs.replaced }}
+    steps:
+      - name: Checkout codebase
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: 'master'
+
+      - name: Create tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v5.5
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          custom_tag: ${{ needs.test-release.outputs.new_tag }}
+          tag_prefix: ''
+          custom_release_rules: config:patch:Configuration Changes,chore:patch:Miscellaneous,
+
+      #- name: Convert JIRA links
+      #  id: convert_jira_links
+      #  uses: frabert/replace-string-action@v1.2
+      #  with:
+      #    pattern: '([A-Z]{3,4}-[0-9]+)'
+      #    string: ${{ steps.tag_version.outputs.changelog }}
+      #    replace-with: '[$1](https://jira.digital.ingka.com/browse/$1)'
+      #    flags: 'g'
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.test-release.outputs.new_tag }}
+          release_name: Release ${{ needs.test-release.outputs.new_tag }}
+          #body: ${{ steps.convert_jira_links.outputs.replaced }}
+          draft: false
+          prerelease: false
+
+      - name: Report failure status
+        id: failure
+        if: ${{ failure() }}
+        run: echo "::set-output name=status::failure"
