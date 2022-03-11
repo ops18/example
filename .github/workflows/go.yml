@@ -20,15 +20,15 @@ jobs:
         
     - name: Build 
       run: go build .
-      working-dir: "demo/"
+      working-directory: "demo/"
 
     - name: Test code
       run: go test .
-      working-dir: "demo/"
+      working-directory: "demo/"
     
     - name: Run
       run: go run main.go
-      working-dir: "demo/"
+      working-directory: "demo/"
       
   Docker-Lint:
     runs-on: ubuntu-latest
@@ -38,9 +38,8 @@ jobs:
       - uses: actions/checkout@v2 
       - uses: hadolint/hadolint-action@v1.6.0
         with:
-          dockerfile: ./Dockerfile
-	working-dir: "demo/"
-      
+          dockerfile: "./demo/Dockerfile"
+	 
   Docker-build:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
@@ -54,18 +53,10 @@ jobs:
     - name: Update tag to GIT_SHA env property with commit short sha
       run: echo "GIT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
       id: version
-     
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
     
-    - name: build local container
-      uses: docker/build-push-action@v2
-      id: build
-      with:
-        tags: gcr.io/ingka-apim-global-dev/go-code:${{ env.GIT_SHA }}
-        push: false
-        load: true
-      working-dir: "demo/"
+    - name: Build and tag Docker Image
+      run: docker build -t $IMAGE_NAME:${{ env.GIT_SHA }}  .
+      working-directory: "demo/"
         
     - name: Scan image
       uses: anchore/scan-action@v3
