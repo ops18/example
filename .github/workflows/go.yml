@@ -58,7 +58,7 @@ jobs:
       working-directory: "demo/"
     
     - name: Build and tag Docker Image
-      run: docker build -t $IMAGE_NAME:${{ env.GIT_SHA }}  .
+      run: docker build -t $IMAGE_NAME:${{ env.GIT_SHA }} .
       working-directory: "demo/"
         
     - name: Scan image
