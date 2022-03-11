@@ -81,7 +81,6 @@ jobs:
     if: needs.bump-version.outputs.status != 'failure'
     outputs:
       status: ${{ steps.failure.outputs.status }}
-      #changelog: ${{ steps.convert_jira_links.outputs.replaced }}
     steps:
       - name: Checkout codebase
         uses: actions/checkout@v2
@@ -97,15 +96,6 @@ jobs:
           custom_tag: ${{ needs.test-release.outputs.new_tag }}
           tag_prefix: ''
           custom_release_rules: config:patch:Configuration Changes,chore:patch:Miscellaneous,
-
-      #- name: Convert JIRA links
-      #  id: convert_jira_links
-      #  uses: frabert/replace-string-action@v1.2
-      #  with:
-      #    pattern: '([A-Z]{3,4}-[0-9]+)'
-      #    string: ${{ steps.tag_version.outputs.changelog }}
-      #    replace-with: '[$1](https://jira.digital.ingka.com/browse/$1)'
-      #    flags: 'g'
 
       - name: Create Release
         id: create_release
