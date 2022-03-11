@@ -41,9 +41,9 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
     needs: Docker-Lint
-    #permissions:
-    #  contents: 'read'
-    #  id-token: 'write'
+    permissions:
+      contents: 'read'
+      id-token: 'write'
     #env:
     #  IMAGE_NAME: gcr.io/ingka-apim-global-dev/go-code
     steps:
