@@ -14,7 +14,7 @@ func TestHandler(t *testing.T) {
 	}{
 		{
 			label: "default",
-			want:  "Hello World!\n",
+			want:  "Hello User!\n",
 			name:  "",
 		},
 		{
