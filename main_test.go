@@ -14,7 +14,7 @@ func TestHandler(t *testing.T) {
 	}{
 		{
 			label: "default",
-			want:  "Hello User!\n",
+			want:  "Hello User! Now app is deployed\n",
 			name:  "",
 		},
 		{
