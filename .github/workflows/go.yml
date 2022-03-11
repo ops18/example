@@ -3,14 +3,15 @@ name: Go
 on:
   push:
     branches: [ master ]
-
+  pull_request:
+    branches: [ master ]
 jobs:
   go-test:
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
     #defaults:
     #  run:
-    #    working-directory: terraform
-    if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags')
+    #    working-directory: pwd
     steps:
     - uses: actions/checkout@v2
     
@@ -31,20 +32,19 @@ jobs:
       
   Docker-Lint:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+    if: github.event_name == 'pull_request'
     needs: go-test
     steps:
       - uses: actions/checkout@v2 
       - uses: hadolint/hadolint-action@v1.6.0
         with:
           dockerfile: "./Dockerfile" 
-  Docker-build:
+  Docker-build-deploy:
     runs-on: ubuntu-latest
     #defaults:
     #  run:
-    #    working-directory: terraform
-    if: github.ref == 'refs/heads/master'
-    needs: Docker-Lint
+    #    working-directory: pwd
+    if: github.event_name == 'push'
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -88,5 +88,5 @@ jobs:
 ########################----------Cloud Run Configuration------------------############################### 
     - name: Deploy go code to cloud run
       id: deploy
-      run: gcloud run deploy rest-api --image gcr.io/ingka-apim-global-dev/go-code:${{ env.GIT_SHA }} --platform managed --region us-central1  --allow-unauthenticated --max-instances=1 --port=8000  --ingress=internal --timeout=30 --concurrency=80 --vpc-connector=projects/ingka-apim-global-dev/locations/europe-west4/connectors/kong-gw-cloudrun
+      run: gcloud run deploy rest-api --image gcr.io/ingka-apim-global-dev/go-code:${{ env.GIT_SHA }} --platform managed --region europe-west4  --allow-unauthenticated --max-instances=1 --port=8000  --ingress=internal --timeout=30 --concurrency=80 --vpc-connector=projects/ingka-apim-global-dev/locations/europe-west4/connectors/kong-gw-cloudrun
 ########################----------Cloud Run Configuration------------------############################### 
