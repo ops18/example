@@ -55,7 +55,7 @@ jobs:
     
     - name: Build and tag Docker Image
       run: docker build -t $IMAGE_NAME:${{ env.GIT_SHA }}  .
-      working-directory: "./demo/"
+      working-directory: demo/
         
     - name: Scan image
       uses: anchore/scan-action@v3
