@@ -20,12 +20,15 @@ jobs:
         
     - name: Build 
       run: go build .
-      
+      working-dir: "demo/"
+
     - name: Test code
       run: go test .
+      working-dir: "demo/"
     
     - name: Run
-      run: go run hello.go
+      run: go run main.go
+      working-dir: "demo/"
       
   Docker-Lint:
     runs-on: ubuntu-latest
@@ -36,6 +39,7 @@ jobs:
       - uses: hadolint/hadolint-action@v1.6.0
         with:
           dockerfile: ./Dockerfile
+	working-dir: "demo/"
       
   Docker-build:
     runs-on: ubuntu-latest
@@ -60,7 +64,8 @@ jobs:
       with:
         tags: gcr.io/ingka-apim-global-dev/go-code:${{ env.GIT_SHA }}
         push: false
-        load: true  
+        load: true
+      working-dir: "demo/"
         
     - name: Scan image
       uses: anchore/scan-action@v3
@@ -90,5 +95,5 @@ jobs:
 
     - name: Deploy go code to cloud run
       id: deploy
-      run: gcloud run deploy go-code --image=gcr.io/ingka-apim-global-dev/go-code:${{ env.GIT_SHA }}  --memory 1Gi --cpu 1 --timeout=30 --min-instances=1 --max-instances=100 --concurrency=80 --vpc-connector=projects/ingka-apim-global-dev/locations/europe-west4/connectors/kong-gw-cloudrun --platform=managed --allow-unauthenticated --region=europe-west4 --project=ingka-apim-global-dev --vpc-egress=all-traffic --port=8000
+      run: gcloud run deploy rest-api --image gcr.io/ingka-apim-global-dev/go-code:${{ env.GIT_SHA }} --platform managed --region us-central1  --allow-unauthenticated --max-instances=1 --port=8000
 ########################----------Cloud Run Configuration------------------############################### 
