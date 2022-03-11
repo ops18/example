@@ -55,7 +55,7 @@ jobs:
       run: ls -lrth
     
     - name: Build and tag Docker Image
-      run: docker build -t $IMAGE_NAME:${{ env.GIT_SHA }} .
+      run: docker build -t gcr.io/ingka-apim-global-dev/go-code:${{ env.GIT_SHA }} .
         
     - name: Scan image
       uses: anchore/scan-action@v3
