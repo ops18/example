@@ -26,9 +26,9 @@ jobs:
       run: go test .
       working-directory: "demo/"
     
-    - name: Run
-      run: go run main.go
-      working-directory: "demo/"
+    #- name: Run
+    #  run: go run main.go
+    #  working-directory: "demo/"
       
   Docker-Lint:
     runs-on: ubuntu-latest
