@@ -47,6 +47,8 @@ jobs:
     #env:
     #  IMAGE_NAME: gcr.io/ingka-apim-global-dev/go-code
     steps:
+    - uses: actions/checkout@v2
+    
     - name: Update tag to GIT_SHA env property with commit short sha
       run: echo "GIT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
       id: version
