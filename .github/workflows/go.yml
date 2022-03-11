@@ -41,6 +41,11 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
     needs: Docker-Lint
+    #permissions:
+    #  contents: 'read'
+    #  id-token: 'write'
+    env:
+      IMAGE_NAME: gcr.io/ingka-apim-global-dev/go-code
     steps:
     - name: Update tag to GIT_SHA env property with commit short sha
       run: echo "GIT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
@@ -53,7 +58,7 @@ jobs:
       uses: docker/build-push-action@v2
       id: build
       with:
-        tags: localbuild/goimage:${{ env.GIT_SHA }}
+        tags: $IMAGE_NAME:${{ env.GIT_SHA }}
         push: false
         load: true  
         
@@ -61,7 +66,7 @@ jobs:
       uses: anchore/scan-action@v3
       id: scan
       with:
-        image: "localbuild/goimage:${{ env.GIT_SHA }}"
+        image: "$IMAGE_NAME:${{ env.GIT_SHA }}"
         acs-report-enable: true
         severity-cutoff: critical
         fail-build: false
@@ -69,3 +74,21 @@ jobs:
     
     - name: Inspect action SARIF report
       run: cat ${{ steps.scan.outputs.sarif }}
+########################----------Cloud Run Configuration------------------############################### 
+    #- id: 'auth'
+    #  name: 'Authenticate to Google Cloud'
+    #  uses: 'google-github-actions/auth@v0'
+    #  with:
+    #    workload_identity_provider: ${{secrets.WIP_PROVIDER}}
+    #    service_account: ${{secrets.WIP_SA}}
+                     
+    #- name: Configure Docker Authentication
+    #  run: gcloud auth configure-docker --quiet
+
+    #- name: Push Docker image to GCR
+    #  run: docker push $IMAGE_NAME:${{ env.GIT_SHA }}
+
+    #- name: Deploy kong gateway to cloud run
+    #  id: deploy
+    #  run: gcloud run deploy go-code --image=$IMAGE_NAME:${{ env.GIT_SHA }}  --memory 1Gi --cpu 1 --timeout=30 --min-instances=1 --max-instances=100 --concurrency=80 --vpc-connector=projects/ingka-apim-global-dev/locations/europe-west4/connectors/kong-gw-cloudrun --platform=managed --allow-unauthenticated --region=europe-west4 --project=ingka-apim-global-dev --vpc-egress=all-traffic --port=8000
+    ########################----------Cloud Run Configuration------------------############################### 
