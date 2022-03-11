@@ -75,15 +75,15 @@ jobs:
     - name: Inspect action SARIF report
       run: cat ${{ steps.scan.outputs.sarif }}
 ########################----------Cloud Run Configuration------------------############################### 
-    #- id: 'auth'
-    #  name: 'Authenticate to Google Cloud'
-    #  uses: 'google-github-actions/auth@v0'
-    #  with:
-    #    workload_identity_provider: ${{secrets.WIP_PROVIDER}}
-    #    service_account: ${{secrets.WIP_SA}}
+    - id: 'auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v0'
+      with:
+        workload_identity_provider: ${{secrets.WIP_PROVIDER}}
+        service_account: ${{secrets.WIP_SA}}
                      
-    #- name: Configure Docker Authentication
-    #  run: gcloud auth configure-docker --quiet
+    - name: Configure Docker Authentication
+      run: gcloud auth configure-docker --quiet
 
     #- name: Push Docker image to GCR
     #  run: docker push $IMAGE_NAME:${{ env.GIT_SHA }}
