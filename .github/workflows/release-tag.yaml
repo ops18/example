@@ -3,7 +3,7 @@ name: Upload release assets after tagging
 on:
   push:
     tags:
-      - 'v*'
+      - 'abv*'
 jobs:
   build:
     name: create assets
