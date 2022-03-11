@@ -52,10 +52,14 @@ jobs:
     - name: Update tag to GIT_SHA env property with commit short sha
       run: echo "GIT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
       id: version
+      
+    - name: List files
+      run: ls -lrth
+      working-directory: "demo/"
     
     - name: Build and tag Docker Image
       run: docker build -t $IMAGE_NAME:${{ env.GIT_SHA }}  .
-      working-directory: demo/
+      working-directory: "demo/"
         
     - name: Scan image
       uses: anchore/scan-action@v3
