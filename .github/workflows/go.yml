@@ -51,8 +51,15 @@ jobs:
       run: echo "GIT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
       id: version
       
-    - name: List files
-      run: ls -lrth
+    - id: 'auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v0'
+      with:
+        workload_identity_provider: ${{secrets.WIP_PROVIDER}}
+        service_account: ${{secrets.WIP_SA}}
+                     
+    - name: Configure Docker Authentication
+      run: gcloud auth configure-docker --quiet
     
     - name: Build and tag Docker Image
       run: docker build -t gcr.io/ingka-apim-global-dev/go-code:${{ env.GIT_SHA }} .
@@ -69,20 +76,10 @@ jobs:
     
     - name: Inspect action SARIF report
       run: cat ${{ steps.scan.outputs.sarif }}
-########################----------Cloud Run Configuration------------------############################### 
-    - id: 'auth'
-      name: 'Authenticate to Google Cloud'
-      uses: 'google-github-actions/auth@v0'
-      with:
-        workload_identity_provider: ${{secrets.WIP_PROVIDER}}
-        service_account: ${{secrets.WIP_SA}}
-                     
-    - name: Configure Docker Authentication
-      run: gcloud auth configure-docker --quiet
-
+      
     - name: Push Docker image to GCR
       run: docker push gcr.io/ingka-apim-global-dev/go-code:${{ env.GIT_SHA }}
-
+########################----------Cloud Run Configuration------------------############################### 
     - name: Deploy go code to cloud run
       id: deploy
       run: gcloud run deploy rest-api --image gcr.io/ingka-apim-global-dev/go-code:${{ env.GIT_SHA }} --platform managed --region us-central1  --allow-unauthenticated --max-instances=1 --port=8000
