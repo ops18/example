@@ -3,12 +3,13 @@ name: Go
 on:
   push:
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
 
 jobs:
   go-test:
     runs-on: ubuntu-latest
+    #defaults:
+    #  run:
+    #    working-directory: terraform
     if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags')
     steps:
     - uses: actions/checkout@v2
@@ -39,6 +40,9 @@ jobs:
           dockerfile: "./Dockerfile" 
   Docker-build:
     runs-on: ubuntu-latest
+    #defaults:
+    #  run:
+    #    working-directory: terraform
     if: github.ref == 'refs/heads/master'
     needs: Docker-Lint
     permissions:
@@ -84,5 +88,8 @@ jobs:
 ########################----------Cloud Run Configuration------------------############################### 
     - name: Deploy go code to cloud run
       id: deploy
-      run: gcloud run deploy rest-api --image gcr.io/ingka-apim-global-dev/go-code:${{ env.GIT_SHA }} --platform managed --region us-central1  --allow-unauthenticated --max-instances=1 --port=8000
+      run: gcloud run deploy rest-api --image gcr.io/ingka-apim-global-dev/go-code:${{ env.GIT_SHA }} --platform managed \
+          --region us-central1  --allow-unauthenticated \
+          --max-instances=1 --port=8000  --ingress=internal \
+          --timeout=30 --concurrency=80 --vpc-connector=projects/ingka-apim-global-dev/locations/europe-west4/connectors/kong-gw-cloudrun
 ########################----------Cloud Run Configuration------------------############################### 
