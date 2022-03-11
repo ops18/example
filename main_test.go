@@ -19,7 +19,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			label: "override",
-			want:  "Hello Override!\n",
+			want:  "Hello Override\n",
 			name:  "Override",
 		},
 	}
