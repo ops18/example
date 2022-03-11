@@ -1,9 +1,9 @@
+name: Upload release assets after tagging
+
 on:
   push:
     tags:
       - 'v*'
-
-name: Upload release assets after tagging
 jobs:
   build:
     name: create assets
