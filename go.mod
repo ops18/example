@@ -1,5 +1,3 @@
-module golang.org/x/example
+module github.com/GoogleCloudPlatform/golang-samples/run/helloworld
 
-go 1.15
-
-require golang.org/x/tools v0.0.0-20210112183307-1e6ecd4bf1b0
+go 1.13

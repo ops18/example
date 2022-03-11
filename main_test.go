@@ -1,14 +1,41 @@
 package main
 
-import "testing"
+import (
+	"net/http/httptest"
+	"os"
+	"testing"
+)
 
-func TestHello(t *testing.T) {
+func TestHandler(t *testing.T) {
+	tests := []struct {
+		label string
+		want  string
+		name  string
+	}{
+		{
+			label: "default",
+			want:  "Hello World!\n",
+			name:  "",
+		},
+		{
+			label: "override",
+			want:  "Hello Override!\n",
+			name:  "Override",
+		},
+	}
 
- want := "Hello Golang"
+	originalName := os.Getenv("NAME")
+	defer os.Setenv("NAME", originalName)
 
- got := hello()
+	for _, test := range tests {
+		os.Setenv("NAME", test.name)
 
- if want != got {
-  t.Fatalf("want %s, got %s\n", want, got)
- }
+		req := httptest.NewRequest("GET", "/", nil)
+		rr := httptest.NewRecorder()
+		handler(rr, req)
+
+		if got := rr.Body.String(); got != test.want {
+			t.Errorf("%s: got %q, want %q", test.label, got, test.want)
+		}
+	}
 }

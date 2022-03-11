@@ -1,12 +1,25 @@
-FROM golang:1.16.4-buster AS builder
+FROM golang:1.17-buster as builder
 
-ARG VERSION=dev
+# Create and change to the app directory.
+WORKDIR /app
 
-WORKDIR /go/src/app
-COPY hello.go .
-RUN go build -o hello -ldflags=-X=hello.version=${VERSION} hello.go 
+# Retrieve application dependencies.
+# This allows the container build to reuse cached dependencies.
+# Expecting to copy go.mod and if present go.sum.
+COPY go.* ./
+RUN go mod download
+
+# Copy local code to the container image.
+COPY . ./
+
+# Build the binary.
+RUN go build -v -o server
 
 FROM ubuntu:bionic-20220301
-COPY --from=builder /go/src/app/hello /go/bin/hello
-ENV PATH="/go/bin:${PATH}"
-CMD ["hello"]
+COPY --from=builder /app/server /app/server
+
+# Run the web service on container startup.
+CMD ["/app/server"]
+
+# [END run_helloworld_dockerfile]
+# [END cloudrun_helloworld_dockerfile]
