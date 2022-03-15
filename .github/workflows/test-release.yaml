@@ -11,8 +11,34 @@ on:
       - 'v*'
       
 jobs:
+   
+# <---------------  CHECK SEMVER FORMAT ---------------->
+  check-semver:
+    name: Check Semantic Version
+    runs-on: ubuntu-latest
+    env:
+      SEM_VER_REGEX: "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+
+      - name: Slugify github variables
+        uses: rlespinasse/github-slug-action@v4
+
+      - name: Check SemVerRegex
+        run: |
+          if (echo ${{ env.GITHUB_REF_SLUG }} | grep -Eq ${{ env.SEM_VER_REGEX }}); then
+            echo "Semantic Versioning check of tag ${{ env.GITHUB_REF_SLUG }} passed! Continuing"
+            exit 0
+          else
+            echo "Tag ${{ env.GITHUB_REF_SLUG }} does not meet the versioning REGEX: ${{ env.SEM_VER_REGEX }}"
+            echo "Please remove the Git tag and create a new one in the correct format"
+            exit 1
+          fi
+
   Docker-build-deploy:
     runs-on: ubuntu-latest
+    needs: check-semver
     permissions:
       contents: 'read'
       id-token: 'write'
