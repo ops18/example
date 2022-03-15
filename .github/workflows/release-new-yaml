@@ -52,7 +52,6 @@ jobs:
         run: |
           git config --local user.email "shubham.hatwar@gmail.com"
           git config --local user.name "shubham.hatwar"
-          go version 
 
       - name: Check if there are changes
         id: changes

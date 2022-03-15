@@ -1,71 +1,22 @@
-name: Go for stage deployment
+name: "Go for prod deployment"
 
 on:
+  workflow_dispatch:
+    inputs:
+      skip_build_n_override_tag:
+        description: 'Set to True if required to skip the build and set the Stage deployment to a specific tag & pass the tag value to input - tag_to_override'
+        required: false
+        default: 'false'
+      tag_to_override:
+        description: 'If needed to skip the build, Pass the tag value to override & set the input - skip_build_n_override_tag to true'
+        required: false
   push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
-jobs:
-  go-test:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    #defaults:
-    #  run:
-    #    working-directory: pwd
-    steps:
-    - uses: actions/checkout@v2
-    
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.17
-        
-    - name: Build 
-      run: go build .
+      tags:
+        - "v*"
 
-    - name: Test code
-      run: go test .
-    
-    - name: Unit tests
-      run: |
-        sudo go test . -coverprofile coverage.out -covermode count
-        sudo go tool cover -func coverage.out
-        
-    - name: Quality Gate - Test coverage shall be above threshold
-      env:
-          TESTCOVERAGE_THRESHOLD: 0
-      run: |
-            echo "Quality Gate: checking test coverage is above threshold ..."
-            echo "Threshold             : $TESTCOVERAGE_THRESHOLD %"
-            totalCoverage=`go tool cover -func=coverage.out | grep total | grep -Eo '[0-9]+\.[0-9]+'`
-            echo "Current test coverage : $totalCoverage %"
-            if (( $(echo "$totalCoverage $TESTCOVERAGE_THRESHOLD" | awk '{print ($1 > $2)}') )); then
-                echo "OK"
-            else
-                echo "Current test coverage is below threshold. Please add more unit tests or adjust threshold to a lower value."
-                echo "Failed"
-                exit 1
-            fi
-
-    #- name: Run
-    #  run: go run main.go
-    #  working-directory: "demo/"
-      
-  Docker-Lint:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    needs: go-test
-    steps:
-      - uses: actions/checkout@v2 
-      - uses: hadolint/hadolint-action@v1.6.0
-        with:
-          dockerfile: "./Dockerfile" 
+  jobs:
   Docker-build-deploy:
     runs-on: ubuntu-latest
-    #defaults:
-    #  run:
-    #    working-directory: pwd
-    if: github.event_name == 'push'
     permissions:
       contents: 'read'
       id-token: 'write'
