@@ -14,7 +14,7 @@ func TestHandler(t *testing.T) {
 	}{
 		{
 			label: "default",
-			want:  "Hello User! This app is now deployed successfully!\n",
+			want:  "Hello User! This app is now deployed successfully using github tags basis!\n",
 			name:  "",
 		},
 		{

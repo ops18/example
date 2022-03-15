@@ -29,7 +29,7 @@ func main() {
 func handler(w http.ResponseWriter, r *http.Request) {
 	name := os.Getenv("NAME")
 	if name == "" {
-		name = "User! This app is now deployed successfully!"
+		name = "User! This app is now deployed successfully using github tags basis!"
 	}
 	fmt.Fprintf(w, "Hello %s\n", name)
 }
