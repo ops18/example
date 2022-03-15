@@ -3,25 +3,20 @@ name: "Go for prod deployment"
 on:
   workflow_dispatch:
     inputs:
-      skip_build_n_override_tag:
-        description: 'Set to True if required to skip the build and set the Stage deployment to a specific tag & pass the tag value to input - tag_to_override'
-        required: false
-        default: 'false'
-      tag_to_override:
-        description: 'If needed to skip the build, Pass the tag value to override & set the input - skip_build_n_override_tag to true'
-        required: false
+      email:
+        description: 'Enter your email address'
+        required: true
   push:
-      tags:
-        - "v*"
-
-  jobs:
+    tags:
+      - 'v*'
+      
+jobs:
   Docker-build-deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: 'read'
       id-token: 'write'
-    #env:
-    #  IMAGE_NAME: gcr.io/ingka-apim-global-dev/go-code
+    
     steps:
     - uses: actions/checkout@v2
     
