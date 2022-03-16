@@ -50,8 +50,8 @@ jobs:
 
       - name: Increment version
         run: |
-          git config --local user.email "shubham.hatwar@gmail.com"
-          git config --local user.name "shubham.hatwar"
+          git config --local user.email ""
+          git config --local user.name ""
 
       - name: Check if there are changes
         id: changes
