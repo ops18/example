@@ -36,13 +36,14 @@ jobs:
     steps:
       - uses: actions/checkout@v2 
 
-      - uses: hadolint/hadolint-action@v1.6.0
-        with:
-          dockerfile: "./spring-boot/Dockerfile" 
+      #- uses: hadolint/hadolint-action@v1.6.0
+      #  with:
+      #    dockerfile: "./spring-boot/Dockerfile" 
 
   Docker-build-deploy:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    needs: Docker-Lint
+    if: github.event_name == 'pull_request'
     permissions:
       contents: 'read'
       id-token: 'write'
