@@ -6,15 +6,22 @@ on:
       email:
         description: 'Enter your email address'
         required: true
-  push:
-    tags:
-      - 'v*'
+  #push:
+  #  tags:
+  #    - 'v*'
       
 jobs:
+  print:
+    name: Print message
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo 'Will build, release and deploy to production: ${{ github.sha }}'
    
 # <---------------  CHECK SEMVER FORMAT ---------------->
   check-semver:
     name: Check Semantic Version
+    needs: print
     runs-on: ubuntu-latest
     env:
       SEM_VER_REGEX: "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
@@ -35,10 +42,64 @@ jobs:
             echo "Please remove the Git tag and create a new one in the correct format"
             exit 1
           fi
+# <---------------  Create Release ---------------->
+  create-release:
+    name: Create release
+    runs-on: ubuntu-latest
+    needs: [ check-semver ]
+    steps:
+      - name: Get short SHA
+        id: short_sha
+        run: |
+          short_sha=$(echo ${{ github.sha }} | cut -c1-7)
+          echo "input SHA: ${{ github.sha }}, shorted sha: $short_sha"
+          echo "::set-output name=short_sha::$short_sha"      
+          
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          
+      - name: Get latest tag
+        id: latest_tag
+        run: |
+          set +e
+          tag=$(git describe --abbrev=0 --tag 2>/dev/null)
+          if [ "$tag" == "" ]; then
+            echo "no tags in the repo, using the first commit of the default branch"
+            tag=$(git log --reverse --pretty=format:'%h' | head -n1)
+          fi
+          echo $tag
+          echo "::set-output name=tag::$tag"
+          
+      - name: Build Changelog
+        id: build_changelog
+        uses: mikepenz/release-changelog-builder-action@v2.8.2
+        with:
+          configuration: ".github/changelog_config.json"
+          fromTag: ${{ steps.latest_tag.outputs.tag }}
+          toTag: HEAD
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Check Changelog
+        if: steps.build_changelog.outputs.failed == 'true' || contains(steps.build_changelog.outputs.changelog, 'no changes')
+        run: |
+          echo "failed: ${{ steps.build_changelog.outputs.failed }}"
+          exit 1
+      
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.short_sha.outputs.short_sha }}
+          name: ${{ steps.short_sha.outputs.short_sha }}
+          body: ${{ steps.build_changelog.outputs.changelog }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   Docker-build-deploy:
     runs-on: ubuntu-latest
-    needs: check-semver
+    needs: create-release
     permissions:
       contents: 'read'
       id-token: 'write'
