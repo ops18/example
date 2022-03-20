@@ -1,0 +1,82 @@
+name: Spring Develop Branch CI/CD
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+jobs:
+  spring-test:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11.0.4
+
+      - name: Maven Package
+        run: mvn -B clean package -DskipTests
+
+      - name: Maven Verify
+        run: mvn -B clean verify -Pintegration-test
+
+      - name: Build Package
+        run: mvn -Dmaven.test.failure.ignore clean package
+ 
+  Docker-Lint:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    needs: spring-test
+    steps:
+      - uses: actions/checkout@v2 
+
+      - uses: hadolint/hadolint-action@v1.6.0
+        with:
+          dockerfile: "./Dockerfile" 
+
+  Docker-build-deploy:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+      - uses: actions/checkout@v2
+    
+      - name: Set up JDK 11
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11.0.4
+    
+      - name: Update tag to GIT_SHA env property with commit short sha
+        run: echo "GIT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
+        id: version
+      
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v0'
+        with:
+          workload_identity_provider: ${{secrets.WIP_PROVIDER}}
+          service_account: ${{secrets.WIP_SA}}
+                     
+      - name: Configure Docker Authentication
+        run: gcloud auth configure-docker --quiet
+    
+      - name: Build and tag Docker Image
+        run: docker build -t gcr.io/${{secrets.GCP_PROJECT_NAME}}/spring-code:${{ env.GIT_SHA }} .
+        
+      - name: Scan image
+        uses: anchore/scan-action@v3
+        id: scan
+        with:
+          image: "gcr.io/${{secrets.GCP_PROJECT_NAME}}/spring-code:${{ env.GIT_SHA }}"
+          acs-report-enable: true
+          severity-cutoff: critical
+          fail-build: false
+          debug: true
+    
+      - name: Inspect action SARIF report
+        run: cat ${{ steps.scan.outputs.sarif }}
