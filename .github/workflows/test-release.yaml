@@ -1,11 +1,7 @@
-name: "Go for prod deployment"
+name: "Go for prod deployment and create release"
 
 on:
   workflow_dispatch:
-    inputs:
-      email:
-        description: 'Enter your email address'
-        required: true
   #push:
   #  tags:
   #    - 'v*'
