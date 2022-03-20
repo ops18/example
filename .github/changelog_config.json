@@ -1,0 +1,6 @@
+{
+  "sort": "DESC",
+  "template": "## What’s Changed\n\n${{UNCATEGORIZED}}",
+  "pr_template": "* ${{TITLE}} (#${{NUMBER}})",
+  "empty_template": "no changes"
+}
