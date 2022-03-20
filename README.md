@@ -1,5 +1,7 @@
 # Go example projects
 
+[![Go for prod deployment and create release](https://github.com/ops18/example/actions/workflows/test-release.yaml/badge.svg?branch=master)](https://github.com/ops18/example/actions/workflows/test-release.yaml)
+
 [![Go Reference](https://pkg.go.dev/badge/golang.org/x/example.svg)](https://pkg.go.dev/golang.org/x/example)
 
 This repository contains a collection of Go programs and libraries that
