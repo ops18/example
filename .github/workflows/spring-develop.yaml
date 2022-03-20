@@ -19,13 +19,16 @@ jobs:
 
       - name: Maven Package
         run: mvn -B clean package -DskipTests
+        working-directory: spring-boot/
 
       - name: Maven Verify
         run: mvn -B clean verify -Pintegration-test
-
+        working-directory: spring-boot/
+        
       - name: Build Package
         run: mvn -Dmaven.test.failure.ignore clean package
- 
+        working-directory: spring-boot/
+        
   Docker-Lint:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
@@ -35,7 +38,7 @@ jobs:
 
       - uses: hadolint/hadolint-action@v1.6.0
         with:
-          dockerfile: "./Dockerfile" 
+          dockerfile: "./spring-boot/Dockerfile" 
 
   Docker-build-deploy:
     runs-on: ubuntu-latest
@@ -66,7 +69,7 @@ jobs:
         run: gcloud auth configure-docker --quiet
     
       - name: Build and tag Docker Image
-        run: docker build -t gcr.io/${{secrets.GCP_PROJECT_NAME}}/spring-code:${{ env.GIT_SHA }} .
+        run: docker build -t gcr.io/${{secrets.GCP_PROJECT_NAME}}/spring-code:${{ env.GIT_SHA }} ./spring-boot/
         
       - name: Scan image
         uses: anchore/scan-action@v3
