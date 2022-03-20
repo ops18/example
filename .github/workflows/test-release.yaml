@@ -120,18 +120,18 @@ jobs:
     - name: Build and tag Docker Image
       run: docker build -t gcr.io/${{secrets.GCP_PROJECT_NAME}}go-code:${{ env.GIT_SHA }} .
         
-    - name: Scan image
-      uses: anchore/scan-action@v3
-      id: scan
-      with:
-        image: "gcr.io/${{secrets.GCP_PROJECT_NAME}}/go-code:${{ env.GIT_SHA }}"
-        acs-report-enable: true
-        severity-cutoff: critical
-        fail-build: false
-        debug: true
+#    - name: Scan image
+#      uses: anchore/scan-action@v3
+#      id: scan
+#      with:
+#        image: "gcr.io/${{secrets.GCP_PROJECT_NAME}}/go-code:${{ env.GIT_SHA }}"
+#        acs-report-enable: true
+#        severity-cutoff: critical
+#        fail-build: false
+#        debug: true
     
-    - name: Inspect action SARIF report
-      run: cat ${{ steps.scan.outputs.sarif }}
+#    - name: Inspect action SARIF report
+#      run: cat ${{ steps.scan.outputs.sarif }}
       
     - name: Push Docker image to GCR
       run: docker push gcr.io/${{secrets.GCP_PROJECT_NAME}}/go-code:${{ env.GIT_SHA }}
