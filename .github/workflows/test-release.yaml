@@ -119,7 +119,7 @@ jobs:
       run: gcloud auth configure-docker --quiet
     
     - name: Build and tag Docker Image
-      run: docker build -t gcr.io/${{secrets.GCP_PROJECT_NAME}}go-code:sha-${{ github.sha }} .
+      run: docker build -t gcr.io/${{secrets.GCP_PROJECT_NAME}}/go-code:sha-${{ github.sha }} .
         
 #    - name: Scan image
 #      uses: anchore/scan-action@v3
