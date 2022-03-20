@@ -13,6 +13,7 @@ jobs:
     steps:
       - run: |
           echo 'Will build, release and deploy to production: ${{ github.sha }}'
+          
 # <---------------  CHECK SEMVER FORMAT ---------------->
 #  check-semver:
 #    name: Check Semantic Version
@@ -37,7 +38,7 @@ jobs:
 #            echo "Please remove the Git tag and create a new one in the correct format"
 #            exit 1
 #          fi   
-#
+
 # <---------------  Create Release ---------------->
   create-release:
     name: Create release
