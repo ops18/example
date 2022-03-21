@@ -31,7 +31,7 @@ jobs:
         
   Docker-Lint:
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'push
     needs: spring-test
     steps:
       - uses: actions/checkout@v2 
