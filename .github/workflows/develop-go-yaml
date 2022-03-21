@@ -1,0 +1,106 @@
+name: Go Develop Branch CI/CD
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+jobs:
+  go-test:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    #defaults:
+    #  run:
+    #    working-directory: pwd
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.17
+        
+    - name: Build 
+      run: go build .
+
+    - name: Test code
+      run: go test .
+    
+    - name: Unit tests
+      run: |
+        sudo go test . -coverprofile coverage.out -covermode count
+        sudo go tool cover -func coverage.out
+        
+    - name: Quality Gate - Test coverage shall be above threshold
+      env:
+          TESTCOVERAGE_THRESHOLD: 0
+      run: |
+            echo "Quality Gate: checking test coverage is above threshold ..."
+            echo "Threshold             : $TESTCOVERAGE_THRESHOLD %"
+            totalCoverage=`go tool cover -func=coverage.out | grep total | grep -Eo '[0-9]+\.[0-9]+'`
+            echo "Current test coverage : $totalCoverage %"
+            if (( $(echo "$totalCoverage $TESTCOVERAGE_THRESHOLD" | awk '{print ($1 > $2)}') )); then
+                echo "OK"
+            else
+                echo "Current test coverage is below threshold. Please add more unit tests or adjust threshold to a lower value."
+                echo "Failed"
+                exit 1
+            fi
+
+    #- name: Run
+    #  run: go run main.go
+    #  working-directory: "demo/"
+      
+  Docker-Lint:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    needs: go-test
+    steps:
+      - uses: actions/checkout@v2 
+      - uses: hadolint/hadolint-action@v1.6.0
+        with:
+          dockerfile: "./Dockerfile" 
+  Docker-build-deploy:
+    runs-on: ubuntu-latest
+    #defaults:
+    #  run:
+    #    working-directory: pwd
+    if: github.event_name == 'push'
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    #env:
+    #  IMAGE_NAME: gcr.io/${{secrets.GCP_PROJECT_NAME}}/go-code
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Update tag to GIT_SHA env property with commit short sha
+      run: echo "GIT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
+      id: version
+      
+    - id: 'auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v0'
+      with:
+        workload_identity_provider: ${{secrets.WIP_PROVIDER}}
+        service_account: ${{secrets.WIP_SA}}
+                     
+    - name: Configure Docker Authentication
+      run: gcloud auth configure-docker --quiet
+    
+    - name: Build and tag Docker Image
+      run: docker build -t gcr.io/${{secrets.GCP_PROJECT_NAME}}/go-code:${{ env.GIT_SHA }} .
+        
+    - name: Scan image
+      uses: anchore/scan-action@v3
+      id: scan
+      with:
+        image: "gcr.io/${{secrets.GCP_PROJECT_NAME}}/go-code:${{ env.GIT_SHA }}"
+        acs-report-enable: true
+        severity-cutoff: critical
+        fail-build: false
+        debug: true
+    
+    - name: Inspect action SARIF report
+      run: cat ${{ steps.scan.outputs.sarif }}
+    

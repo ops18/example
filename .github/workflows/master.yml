@@ -1,4 +1,4 @@
-name: Go
+name: Go for stage deployment
 
 on:
   push:
@@ -70,7 +70,7 @@ jobs:
       contents: 'read'
       id-token: 'write'
     #env:
-    #  IMAGE_NAME: gcr.io/ingka-apim-global-dev/go-code
+    #  IMAGE_NAME: gcr.io/${{secrets.GCP_PROJECT_NAME}}/go-code
     steps:
     - uses: actions/checkout@v2
     
@@ -89,13 +89,13 @@ jobs:
       run: gcloud auth configure-docker --quiet
     
     - name: Build and tag Docker Image
-      run: docker build -t gcr.io/ingka-apim-global-dev/go-code:${{ env.GIT_SHA }} .
+      run: docker build -t gcr.io/${{secrets.GCP_PROJECT_NAME}}/go-code:${{ env.GIT_SHA }} .
         
     - name: Scan image
       uses: anchore/scan-action@v3
       id: scan
       with:
-        image: "gcr.io/ingka-apim-global-dev/go-code:${{ env.GIT_SHA }}"
+        image: "gcr.io/${{secrets.GCP_PROJECT_NAME}}/go-code:${{ env.GIT_SHA }}"
         acs-report-enable: true
         severity-cutoff: critical
         fail-build: false
@@ -103,11 +103,4 @@ jobs:
     
     - name: Inspect action SARIF report
       run: cat ${{ steps.scan.outputs.sarif }}
-      
-    - name: Push Docker image to GCR
-      run: docker push gcr.io/ingka-apim-global-dev/go-code:${{ env.GIT_SHA }}
-########################----------Cloud Run Configuration------------------############################### 
-    - name: Deploy go code to cloud run
-      id: deploy
-      run: gcloud run deploy rest-api --image gcr.io/ingka-apim-global-dev/go-code:${{ env.GIT_SHA }} --platform managed --region europe-west4  --allow-unauthenticated --max-instances=1 --port=8000  --ingress=internal --timeout=30 --concurrency=80 --vpc-connector=projects/ingka-apim-global-dev/locations/europe-west4/connectors/kong-gw-cloudrun
-########################----------Cloud Run Configuration------------------############################### 
+    

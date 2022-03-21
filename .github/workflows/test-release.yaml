@@ -1,0 +1,85 @@
+name: "Go for prod deployment"
+
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: 'Enter your email address'
+        required: true
+  push:
+    tags:
+      - 'v*'
+      
+jobs:
+   
+# <---------------  CHECK SEMVER FORMAT ---------------->
+  check-semver:
+    name: Check Semantic Version
+    runs-on: ubuntu-latest
+    env:
+      SEM_VER_REGEX: "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+
+      - name: Slugify github variables
+        uses: rlespinasse/github-slug-action@v4
+
+      - name: Check SemVerRegex
+        run: |
+          if (echo ${{ env.GITHUB_REF_SLUG }} | grep -Eq ${{ env.SEM_VER_REGEX }}); then
+            echo "Semantic Versioning check of tag ${{ env.GITHUB_REF_SLUG }} passed! Continuing"
+            exit 0
+          else
+            echo "Tag ${{ env.GITHUB_REF_SLUG }} does not meet the versioning REGEX: ${{ env.SEM_VER_REGEX }}"
+            echo "Please remove the Git tag and create a new one in the correct format"
+            exit 1
+          fi
+
+  Docker-build-deploy:
+    runs-on: ubuntu-latest
+    needs: check-semver
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Update tag to GIT_SHA env property with commit short sha
+      run: echo "GIT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
+      id: version
+      
+    - id: 'auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v0'
+      with:
+        workload_identity_provider: ${{secrets.WIP_PROVIDER}}
+        service_account: ${{secrets.WIP_SA}}
+                     
+    - name: Configure Docker Authentication
+      run: gcloud auth configure-docker --quiet
+    
+    - name: Build and tag Docker Image
+      run: docker build -t gcr.io/${{secrets.GCP_PROJECT_NAME}}go-code:${{ env.GIT_SHA }} .
+        
+    - name: Scan image
+      uses: anchore/scan-action@v3
+      id: scan
+      with:
+        image: "gcr.io/${{secrets.GCP_PROJECT_NAME}}/go-code:${{ env.GIT_SHA }}"
+        acs-report-enable: true
+        severity-cutoff: critical
+        fail-build: false
+        debug: true
+    
+    - name: Inspect action SARIF report
+      run: cat ${{ steps.scan.outputs.sarif }}
+      
+    - name: Push Docker image to GCR
+      run: docker push gcr.io/${{secrets.GCP_PROJECT_NAME}}/go-code:${{ env.GIT_SHA }}
+########################----------Cloud Run Configuration------------------############################### 
+    - name: Deploy go code to cloud run
+      id: deploy
+      run: gcloud run deploy rest-api --image gcr.io/${{secrets.GCP_PROJECT_NAME}}/go-code:${{ env.GIT_SHA }} --platform managed --region europe-west4  --allow-unauthenticated --max-instances=1 --port=8000  --ingress=internal --timeout=30 --concurrency=80 --vpc-connector=projects/${{secrets.GCP_PROJECT_NAME}}/locations/europe-west4/connectors/kong-gw-cloudrun
+########################----------Cloud Run Configuration------------------############################### 
